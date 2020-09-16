@@ -3,33 +3,52 @@ using System.Collections.Generic;
 
 namespace RectpackSharp
 {
+    /// <summary>
+    /// A static class providing functionality for packing rectangles into a bin as small as possible.
+    /// </summary>
     public static class RectanglePacker
     {
+        /// <summary>A weak reference to the last list used, so it can be reused in subsequent packs.</summary>
         private static WeakReference<List<PackingRectangle>> oldListReference;
 
+        /// <summary>
+        /// Finds a way to pack all the given rectangles into a single bin. Performance can be traded for
+        /// space efficiency by using the optional parameters.
+        /// </summary>
+        /// <param name="rectangles">The rectangles to pack. The result is saved onto this array.</param>
+        /// <param name="bounds">The bounds of the resulting bin. This will always be at X=Y=0.</param>
+        /// <param name="packingHint">Specifies hints for optimizing performance.</param>
+        /// <param name="acceptableDensity">Searching stops once a bin is found with this density (usedArea/totalArea) or better.</param>
+        /// <param name="stepSize">The amount by which to increment/decrement size when trying to pack another bin.</param>
         public static void Pack(PackingRectangle[] rectangles, out PackingRectangle bounds,
-            PackingHint packingHint = PackingHint.FindBest, float acceptableDensity = 1, uint discardStep = 1)
+            PackingHint packingHint = PackingHint.FindBest, float acceptableDensity = 1, uint stepSize = 1)
         {
             if (rectangles == null)
                 throw new ArgumentNullException(nameof(rectangles));
 
-            if (discardStep == 0)
-                throw new ArgumentOutOfRangeException(nameof(discardStep), discardStep, nameof(discardStep) + " must be greater than 0.");
+            if (stepSize == 0)
+                throw new ArgumentOutOfRangeException(nameof(stepSize), stepSize, nameof(stepSize) + " must be greater than 0.");
 
             bounds = default;
             if (rectangles.Length == 0)
                 return;
 
+            // We separate the value in packingHint into the different options it specifies.
             Span<PackingHint> hints = stackalloc PackingHint[PackingHintExtensions.MaxHintCount];
             PackingHintExtensions.GetFlagsFrom(packingHint, ref hints);
 
             if (hints.Length == 0)
                 throw new ArgumentException("No valid packing hints specified.", nameof(packingHint));
 
+            // We calculate the initial bin size we'll try, alongisde the sum of the areas of the rectangles.
             uint binSize = CalculateInitialBinSize(rectangles, out uint totalArea);
-            acceptableDensity = Math.Clamp(acceptableDensity, 0, 1);
+
+            // We turn the acceptableDensity parameter into an acceptableArea value, so we can
+            // compare the area directly rather than having to calculate the density.
+            acceptableDensity = Math.Clamp(acceptableDensity, 0.1f, 1);
             uint acceptableArea = (uint)Math.Ceiling(totalArea / acceptableDensity);
 
+            // We get a list that will be used by the packing algorithm.
             List<PackingRectangle> emptySpaces = GetList(rectangles.Length * 2);
 
             uint currentBestArea = uint.MaxValue;
@@ -41,7 +60,7 @@ namespace RectpackSharp
             {
                 currentBest.CopyTo(tmpBest, 0);
                 PackingHintExtensions.SortByPackingHint(tmpBest, hints[i]);
-                if (FindBestBin(emptySpaces, tmpBest, tmpArray, binSize, discardStep, currentBestArea == uint.MaxValue))
+                if (FindBestBin(emptySpaces, tmpBest, tmpArray, binSize, stepSize, currentBestArea == uint.MaxValue))
                 {
                     PackingRectangle boundsTmp = FindBounds(tmpBest);
                     uint areaTmp = boundsTmp.Area;
@@ -60,18 +79,20 @@ namespace RectpackSharp
             if (currentBest != rectangles)
                 currentBest.CopyTo(rectangles, 0);
 
+            // We return the list so it can be used in subsequent pack operations.
             ReturnList(emptySpaces);
         }
 
         private static bool FindBestBin(List<PackingRectangle> emptySpaces, Span<PackingRectangle> rectangles,
-            Span<PackingRectangle> tmpArray, uint binSize, uint discardStep, bool allowGrow)
+            Span<PackingRectangle> tmpArray, uint binSize, uint stepSize, bool allowGrow)
         {
             if (TryPackAsOrdered(emptySpaces, rectangles, rectangles, binSize, binSize))
             {
+                binSize -= stepSize;
                 Span<PackingRectangle> from = rectangles, to = tmpArray;
                 while (TryPackAsOrdered(emptySpaces, from, to, binSize, binSize))
                 {
-                    binSize -= discardStep;
+                    binSize -= stepSize;
                     Span<PackingRectangle> swaptmp = from;
                     from = to;
                     to = swaptmp;
@@ -81,10 +102,11 @@ namespace RectpackSharp
                     from.CopyTo(rectangles);
                 return true;
             }
-            else if (allowGrow)
+
+            if (allowGrow)
             {
                 while (!TryPackAsOrdered(emptySpaces, rectangles, rectangles, binSize, binSize))
-                    binSize += discardStep;
+                    binSize += stepSize;
                 return true;
             }
 
@@ -93,10 +115,8 @@ namespace RectpackSharp
 
         private static uint CalculateInitialBinSize(ReadOnlySpan<PackingRectangle> rectangles, out uint totalArea)
         {
-            totalArea = 0;
-            for (int i = 0; i < rectangles.Length; i++)
-                totalArea += rectangles[i].Area;
-            return (uint)Math.Ceiling(Math.Sqrt(totalArea) * 1.02);
+            totalArea = CalculateTotalArea(rectangles);
+            return (uint)Math.Ceiling(Math.Sqrt(totalArea) * 1.03);
         }
 
         private static bool TryPackAsOrdered(List<PackingRectangle> emptySpaces, Span<PackingRectangle> unpacked,
@@ -172,29 +192,10 @@ namespace RectpackSharp
             return false;
         }
 
-        public static bool AnyIntersects(ReadOnlySpan<PackingRectangle> rectangles)
-        {
-            for (int i = 0; i < rectangles.Length; i++)
-                for (int c = i + 1; c < rectangles.Length; c++)
-                    if (rectangles[c].Intersects(rectangles[i]))
-                        return true;
-            return false;
-        }
-
-        public static PackingRectangle FindBounds(ReadOnlySpan<PackingRectangle> rectangles)
-        {
-            PackingRectangle bounds = rectangles[0];
-            for (int i = 1; i < rectangles.Length; i++)
-            {
-                bounds.X = Math.Min(bounds.X, rectangles[i].X);
-                bounds.Y = Math.Min(bounds.Y, rectangles[i].Y);
-                bounds.Right = Math.Max(bounds.Right, rectangles[i].Right);
-                bounds.Bottom = Math.Max(bounds.Bottom, rectangles[i].Bottom);
-            }
-
-            return bounds;
-        }
-
+        /// <summary>
+        /// Gets a list of rectangles that can be used for empty spaces.
+        /// </summary>
+        /// <param name="preferredCapacity">If a list has to be created, this is used as initial capacity.</param>
         private static List<PackingRectangle> GetList(int preferredCapacity)
         {
             if (oldListReference == null)
@@ -212,6 +213,10 @@ namespace RectpackSharp
             }
         }
 
+        /// <summary>
+        /// Returns a list so it can be used in future pack operations. The list should
+        /// no longer be used after returned.
+        /// </summary>
         private static void ReturnList(List<PackingRectangle> list)
         {
             if (oldListReference == null)
@@ -291,6 +296,46 @@ namespace RectpackSharp
                 list[i] = list[i + 1];
 
             list[min] = rectangle;
+        }
+
+        /// <summary>
+        /// Calculates the sum of the areas of all the given <see cref="PackingRectangle"/>-s.
+        /// </summary>
+        public static uint CalculateTotalArea(ReadOnlySpan<PackingRectangle> rectangles)
+        {
+            uint totalArea = 0;
+            for (int i = 0; i < rectangles.Length; i++)
+                totalArea += rectangles[i].Area;
+            return totalArea;
+        }
+
+        /// <summary>
+        /// Calculates the smallest possible rectangle that contains all the given rectangles.
+        /// </summary>
+        public static PackingRectangle FindBounds(ReadOnlySpan<PackingRectangle> rectangles)
+        {
+            PackingRectangle bounds = rectangles[0];
+            for (int i = 1; i < rectangles.Length; i++)
+            {
+                bounds.X = Math.Min(bounds.X, rectangles[i].X);
+                bounds.Y = Math.Min(bounds.Y, rectangles[i].Y);
+                bounds.Right = Math.Max(bounds.Right, rectangles[i].Right);
+                bounds.Bottom = Math.Max(bounds.Bottom, rectangles[i].Bottom);
+            }
+
+            return bounds;
+        }
+
+        /// <summary>
+        /// Returns true if any two different rectangles in the given span intersect.
+        /// </summary>
+        public static bool AnyIntersects(ReadOnlySpan<PackingRectangle> rectangles)
+        {
+            for (int i = 0; i < rectangles.Length; i++)
+                for (int c = i + 1; c < rectangles.Length; c++)
+                    if (rectangles[c].Intersects(rectangles[i]))
+                        return true;
+            return false;
         }
     }
 }
