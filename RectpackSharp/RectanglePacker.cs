@@ -16,14 +16,14 @@ namespace RectpackSharp
         /// space efficiency by using the optional parameters.
         /// </summary>
         /// <param name="rectangles">The rectangles to pack. The result is saved onto this array.</param>
-        /// <param name="currentBestBounds">The bounds of the resulting bin. This will always be at X=Y=0.</param>
+        /// <param name="bounds">The bounds of the resulting bin. This will always be at X=Y=0.</param>
         /// <param name="packingHint">Specifies hints for optimizing performance.</param>
         /// <param name="acceptableDensity">Searching stops once a bin is found with this density (usedArea/totalArea) or better.</param>
         /// <param name="stepSize">The amount by which to increment/decrement size when trying to pack another bin.</param>
         /// <remarks>
         /// The <see cref="PackingRectangle.Id"/> values are never touched. Use this to identify your rectangles.
         /// </remarks>
-        public static void Pack(PackingRectangle[] rectangles, out PackingRectangle currentBestBounds,
+        public static void Pack(PackingRectangle[] rectangles, out PackingRectangle bounds,
             PackingHint packingHint = PackingHint.FindBest, float acceptableDensity = 1, uint stepSize = 1)
         {
             if (rectangles == null)
@@ -32,7 +32,7 @@ namespace RectpackSharp
             if (stepSize == 0)
                 throw new ArgumentOutOfRangeException(nameof(stepSize), stepSize, nameof(stepSize) + " must be greater than 0.");
 
-            currentBestBounds = default;
+            bounds = default;
             if (rectangles.Length == 0)
                 return;
 
@@ -82,9 +82,9 @@ namespace RectpackSharp
                     if (areaTmp < currentBestArea)
                     {
                         // We update the variables tracking the current best solution
-                        currentBestBounds = boundsTmp;
+                        bounds = boundsTmp;
                         currentBestArea = areaTmp;
-                        binSize = currentBestBounds.BiggerSide;
+                        binSize = bounds.BiggerSide;
 
                         // We swap tmpBest and currentBest
                         PackingRectangle[] swaptmp = tmpBest;
