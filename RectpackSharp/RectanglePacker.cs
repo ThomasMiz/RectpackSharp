@@ -73,7 +73,7 @@ namespace RectpackSharp
                 // We try to find the best bin for the rectangles in tmpBest. We give the function as
                 // initial bin size, the size of the best bin we got so far. We only allow it to try
                 // bigger bins if we don't have a solution yet (currentBestArea == uint.MaxValue).
-                if (TryFindBestBin(emptySpaces, tmpBest, tmpArray, binSize, stepSize, currentBestArea == uint.MaxValue))
+                if (TryFindBestBin(emptySpaces, ref tmpBest, ref tmpArray, binSize, stepSize, currentBestArea == uint.MaxValue))
                 {
                     // We have a possible solution! If it uses less area than our current best solution,
                     // then we've got a new best solution.
@@ -112,26 +112,23 @@ namespace RectpackSharp
         /// <param name="stepSize">The amount by which to increment/decrement size when trying to pack another bin.</param>
         /// <param name="allowGrow">Whether the function can try increasing the bin size.</param>
         /// <returns>Whether a solution could be found.</returns>
-        private static bool TryFindBestBin(List<PackingRectangle> emptySpaces, Span<PackingRectangle> rectangles,
-            Span<PackingRectangle> tmpArray, uint binSize, uint stepSize, bool allowGrow)
+        private static bool TryFindBestBin(List<PackingRectangle> emptySpaces, ref PackingRectangle[] rectangles,
+            ref PackingRectangle[] tmpArray, uint binSize, uint stepSize, bool allowGrow)
         {
             // We first try to pack what we've got. If we succeed, we'll try smaller sizes.
             if (TryPackAsOrdered(emptySpaces, rectangles, rectangles, binSize, binSize))
             {
                 binSize -= stepSize;
-                Span<PackingRectangle> from = rectangles, to = tmpArray;
 
                 // We try smaller sizes until one doesn't work
-                while (TryPackAsOrdered(emptySpaces, from, to, binSize, binSize))
+                while (TryPackAsOrdered(emptySpaces, rectangles, tmpArray, binSize, binSize))
                 {
                     binSize -= stepSize;
-                    Span<PackingRectangle> swaptmp = from;
-                    from = to;
-                    to = swaptmp;
+                    PackingRectangle[] swaptmp = rectangles;
+                    rectangles = tmpArray;
+                    tmpArray = swaptmp;
                 }
 
-                if (from != rectangles)
-                    from.CopyTo(rectangles);
                 return true;
             }
 

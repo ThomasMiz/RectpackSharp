@@ -42,6 +42,7 @@ In this test case, all the squares are the same size. Currently, the library doe
 ![](images/rectangles_squares.png)
 
 It also works like a charm for texture atlases or sprite sheets!
+![](images/rectangles_spritesheet2.png)
 ![](images/rectangles_spritesheet.png)
 
 The most complicated cases are when the rectangles have very irregular dimentions, because there's no good answer to "what to put where".

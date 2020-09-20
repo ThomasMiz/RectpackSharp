@@ -11,7 +11,7 @@ namespace Tests
 {
     class Program
     {
-        static Random r = new Random();
+        static readonly Random r = new Random();
 
         static void Main(string[] args)
         {
