@@ -7,25 +7,6 @@ This started as a side-project for the [TrippyGL graphics library](https://githu
 
 The libary is quite small, so you can even just chuck the files directly onto your project if you don't want additional DLLs!
 
-## Gallery
-
-Here's a test case where the rectangles have relatively similar dimentions.
-![](images/rectangles_similar.png)
-
-In this test case, all the squares are the same size. Currently, the library doesn't handle the edges very well on these cases.
-![](images/rectangles_squares.png)
-
-It also works like a charm for texture atlases or sprite sheets!
-![](images/rectangles_spritesheet.png)
-
-The most complicated cases are when the rectangles have very irregular dimentions, because there's no good answer to "what to put where".
-For these next test cases, we simply generated 512 or 2048 random rectangles (each side being from 20 to 200) and packed them.
-![](images/rectangles_random1.png)
-![](images/rectangles_random2.png)
-
-Fuck it, here's 65536 random rectangles in a ~24k x 24k bin.
-![](images/rectangles_random65536.jpeg)
-
 ## Usage
 
 Once you have the library, just add ``using RectpackSharp`` to access the library types.
@@ -51,3 +32,22 @@ So for example, if you know all your rectangles are squares, you might wanna try
 ```cs
 RectanglePacker.Pack(rectangles, out PackingRectangle bounds, PackingHint.Width, 1, 1);
 ```
+
+## Gallery
+
+Here's a test case where the rectangles have relatively similar dimentions.
+![](images/rectangles_similar.png)
+
+In this test case, all the squares are the same size. Currently, the library doesn't handle the edges very well on these cases.
+![](images/rectangles_squares.png)
+
+It also works like a charm for texture atlases or sprite sheets!
+![](images/rectangles_spritesheet.png)
+
+The most complicated cases are when the rectangles have very irregular dimentions, because there's no good answer to "what to put where".
+For these next test cases, we simply generated 512 or 2048 random rectangles (each side being from 20 to 200) and packed them.
+![](images/rectangles_random1.png)
+![](images/rectangles_random2.png)
+
+Fuck it, here's 65536 random rectangles in a ~24k x 24k bin.
+![](images/rectangles_random65536.jpeg)
