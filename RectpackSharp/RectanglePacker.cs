@@ -45,7 +45,7 @@ namespace RectpackSharp
 
             // We calculate the initial bin size we'll try, alongisde the sum of the areas of the rectangles.
             uint totalArea = CalculateTotalArea(rectangles);
-            uint binSize = (uint)Math.Ceiling(Math.Sqrt(totalArea) * 1.05);
+            uint binSize = (uint)Math.Ceiling(Math.Sqrt(totalArea) * 1.03);
 
             // We turn the acceptableDensity parameter into an acceptableArea value, so we can
             // compare the area directly rather than having to calculate the density.
@@ -73,11 +73,11 @@ namespace RectpackSharp
                 // We try to find the best bin for the rectangles in tmpBest. We give the function as
                 // initial bin size, the size of the best bin we got so far. We only allow it to try
                 // bigger bins if we don't have a solution yet (currentBestArea == uint.MaxValue).
-                if (TryFindBestBin(emptySpaces, ref tmpBest, ref tmpArray, binSize, stepSize, currentBestArea == uint.MaxValue))
+                if (TryFindBestBin(emptySpaces, ref tmpBest, ref tmpArray, binSize, stepSize,
+                    currentBestArea == uint.MaxValue, acceptableArea, out PackingRectangle boundsTmp))
                 {
                     // We have a possible solution! If it uses less area than our current best solution,
                     // then we've got a new best solution.
-                    PackingRectangle boundsTmp = FindBounds(tmpBest);
                     uint areaTmp = boundsTmp.Area;
                     if (areaTmp < currentBestArea)
                     {
@@ -111,32 +111,45 @@ namespace RectpackSharp
         /// <param name="binSize">The first bin size to try.</param>
         /// <param name="stepSize">The amount by which to increment/decrement size when trying to pack another bin.</param>
         /// <param name="allowGrow">Whether the function can try increasing the bin size.</param>
+        /// <param name="acceptableArea">Stops searching once a bin with this area or less is found.</param>
+        /// <param name="bounds">The bounds of the resulting bin (0, 0, width, height).</param>
         /// <returns>Whether a solution could be found.</returns>
         private static bool TryFindBestBin(List<PackingRectangle> emptySpaces, ref PackingRectangle[] rectangles,
-            ref PackingRectangle[] tmpArray, uint binSize, uint stepSize, bool allowGrow)
+            ref PackingRectangle[] tmpArray, uint binSize, uint stepSize, bool allowGrow, uint acceptableArea, out PackingRectangle bounds)
         {
+            bounds = default;
+            uint boundsWidth;
+            uint boundsHeight;
+
             // We first try to pack what we've got. If we succeed, we'll try smaller sizes.
-            if (TryPackAsOrdered(emptySpaces, rectangles, rectangles, binSize, binSize))
+            if (TryPackAsOrdered(emptySpaces, rectangles, rectangles, binSize, binSize, out boundsWidth, out boundsHeight))
             {
                 binSize -= stepSize;
 
                 // We try smaller sizes until one doesn't work
-                while (TryPackAsOrdered(emptySpaces, rectangles, tmpArray, binSize, binSize))
+                while (boundsWidth * boundsHeight > acceptableArea &&
+                    TryPackAsOrdered(emptySpaces, rectangles, tmpArray, binSize, binSize, out uint bw, out uint bh))
                 {
+                    boundsWidth = bw;
+                    boundsHeight = bh;
                     binSize -= stepSize;
                     PackingRectangle[] swaptmp = rectangles;
                     rectangles = tmpArray;
                     tmpArray = swaptmp;
                 }
 
+                bounds.Width = boundsWidth;
+                bounds.Height = boundsHeight;
                 return true;
             }
 
             // If the first pack didn't succeed, then we try incrementing the bin size.
             if (allowGrow)
             {
-                while (!TryPackAsOrdered(emptySpaces, rectangles, rectangles, binSize, binSize))
+                while (!TryPackAsOrdered(emptySpaces, rectangles, rectangles, binSize, binSize, out boundsWidth, out boundsHeight))
                     binSize += stepSize;
+                bounds.Width = boundsWidth;
+                bounds.Height = boundsHeight;
                 return true;
             }
 
@@ -152,14 +165,20 @@ namespace RectpackSharp
         /// <param name="packed">Where the resulting rectangles will be written.</param>
         /// <param name="binWidth">The width of the bin.</param>
         /// <param name="binHeight">The height of the bin.</param>
+        /// <param name="boundsWidth">The width of the resulting bin.</param>
+        /// <param name="boundsHeight">The height of the resulting bin.</param>
         /// <returns>Whether the operation succeeded.</returns>
         /// <remarks>The unpacked and packed spans can be the same.</remarks>
         private static bool TryPackAsOrdered(List<PackingRectangle> emptySpaces, Span<PackingRectangle> unpacked,
-            Span<PackingRectangle> packed, uint binWidth, uint binHeight)
+            Span<PackingRectangle> packed, uint binWidth, uint binHeight, out uint boundsWidth, out uint boundsHeight)
         {
             // We clear the empty spaces list and add one space covering the entire bin.
             emptySpaces.Clear();
             emptySpaces.Add(new PackingRectangle(0, 0, binWidth, binHeight));
+
+            // boundsWidth and boundsHeight both start at 0. 
+            boundsWidth = 0;
+            boundsHeight = 0;
 
             // We loop through all the rectangles.
             for (int r = 0; r < unpacked.Length; r++)
@@ -172,6 +191,8 @@ namespace RectpackSharp
                 packed[r] = unpacked[r];
                 packed[r].X = oldSpace.X;
                 packed[r].Y = oldSpace.Y;
+                boundsWidth = Math.Max(boundsWidth, packed[r].Right);
+                boundsHeight = Math.Max(boundsHeight, packed[r].Bottom);
 
                 // We calculate the width and height of the rectangles from splitting the empty space
                 uint freeWidth = oldSpace.Width - packed[r].Width;
