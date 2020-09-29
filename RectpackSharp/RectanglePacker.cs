@@ -132,7 +132,7 @@ namespace RectpackSharp
                 {
                     boundsWidth = bw;
                     boundsHeight = bh;
-                    binSize -= stepSize;
+                    binSize = Math.Min(binSize - stepSize, Math.Max(bw, bh));
                     PackingRectangle[] swaptmp = rectangles;
                     rectangles = tmpArray;
                     tmpArray = swaptmp;
