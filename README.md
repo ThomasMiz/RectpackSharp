@@ -33,6 +33,9 @@ So for example, if you know all your rectangles are squares, you might wanna try
 RectanglePacker.Pack(rectangles, out PackingRectangle bounds, PackingHint.Width, 1, 1);
 ```
 
+## Need Help?
+Feel free to come ask questions over at the [TrippyGL Discord server](https://discord.gg/3j5Q4zN)!
+
 ## Gallery
 
 Here's a test case where the rectangles have relatively similar dimentions.
