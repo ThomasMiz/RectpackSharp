@@ -132,10 +132,16 @@ namespace RectpackSharp
                 {
                     boundsWidth = bw;
                     boundsHeight = bh;
-                    binSize = Math.Min(binSize - stepSize, Math.Max(bw, bh));
                     PackingRectangle[] swaptmp = rectangles;
                     rectangles = tmpArray;
                     tmpArray = swaptmp;
+
+                    // When we're getting close to the final result, we'll reduce the bin size by
+                    // stepSize. But if the final bin size ends up requiring multiple steps to get
+                    // there, that's very inefficient. So in these cases we just take the bigger
+                    // side of the bounds rectangle, which makes everything MUCH faster because the
+                    // packing algorithm already tries to make things as square as possible.
+                    binSize = Math.Min(binSize - stepSize, Math.Max(bw, bh));
                 }
 
                 bounds.Width = boundsWidth;

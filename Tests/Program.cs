@@ -46,9 +46,8 @@ namespace Tests
 
         static PackingRectangle[] GetRectangles()
         {
-            /*
             // Generate RectangleAmount randomized rectangles.
-            const int RectangleAmount = 2048;
+            /*const int RectangleAmount = 2048;
             PackingRectangle[] rectangles = new PackingRectangle[RectangleAmount];
             for (int i = 0; i < rectangles.Length; i++)
                 rectangles[i] = new PackingRectangle(0, 0, (uint)r.Next(20, 200), (uint)r.Next(20, 200));*/
@@ -69,6 +68,13 @@ namespace Tests
                 list.Add(new PackingRectangle(0, 0, 4 * (uint)r.Next(4, 11), 4 * (uint)r.Next(4, 11)));
             PackingRectangle[] rectangles = list.ToArray();
 
+            /*List<PackingRectangle> list = new List<PackingRectangle>();
+            for (int i = 0; i < 512; i++)
+            {
+                list.Add(new PackingRectangle(0, 0, (uint)r.Next(90, 900), (uint)r.Next(20, 200)));
+                list.Add(new PackingRectangle(0, 0, (uint)r.Next(20, 200), (uint)r.Next(90, 900)));
+            }
+            PackingRectangle[] rectangles = list.ToArray();*/
 
             return rectangles;
         }
