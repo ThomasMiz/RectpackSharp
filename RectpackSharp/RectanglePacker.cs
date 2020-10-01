@@ -24,7 +24,7 @@ namespace RectpackSharp
         /// The <see cref="PackingRectangle.Id"/> values are never touched. Use this to identify your rectangles.
         /// </remarks>
         public static void Pack(PackingRectangle[] rectangles, out PackingRectangle bounds,
-            PackingHint packingHint = PackingHint.FindBest, float acceptableDensity = 1, uint stepSize = 1)
+            PackingHints packingHint = PackingHints.FindBest, float acceptableDensity = 1, uint stepSize = 1)
         {
             if (rectangles == null)
                 throw new ArgumentNullException(nameof(rectangles));
@@ -37,7 +37,7 @@ namespace RectpackSharp
                 return;
 
             // We separate the value in packingHint into the different options it specifies.
-            Span<PackingHint> hints = stackalloc PackingHint[PackingHintExtensions.MaxHintCount];
+            Span<PackingHints> hints = stackalloc PackingHints[PackingHintExtensions.MaxHintCount];
             PackingHintExtensions.GetFlagsFrom(packingHint, ref hints);
 
             if (hints.Length == 0)

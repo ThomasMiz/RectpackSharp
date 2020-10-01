@@ -6,7 +6,7 @@ namespace RectpackSharp
     /// Specifies hints that help optimize the rectangle packing algorithm. 
     /// </summary>
     [Flags]
-    public enum PackingHint
+    public enum PackingHints
     {
         /// <summary>Tells the rectangle packer to try inserting the rectangles ordered by area.</summary>
         TryByArea = 1,
@@ -64,21 +64,21 @@ namespace RectpackSharp
         /// </summary>
         /// <param name="packingHint">The <see cref="PackingHint"/> to separate.</param>
         /// <param name="span">The span in which to write the resulting hints. This span's excess will be sliced.</param>
-        public static void GetFlagsFrom(PackingHint packingHint, ref Span<PackingHint> span)
+        public static void GetFlagsFrom(PackingHints packingHint, ref Span<PackingHints> span)
         {
             int index = 0;
-            if (packingHint.HasFlag(PackingHint.TryByArea))
-                span[index++] = PackingHint.TryByArea;
-            if (packingHint.HasFlag(PackingHint.TryByPerimeter))
-                span[index++] = PackingHint.TryByPerimeter;
-            if (packingHint.HasFlag(PackingHint.TryByBiggerSide))
-                span[index++] = PackingHint.TryByBiggerSide;
-            if (packingHint.HasFlag(PackingHint.TryByWidth))
-                span[index++] = PackingHint.TryByWidth;
-            if (packingHint.HasFlag(PackingHint.TryByHeight))
-                span[index++] = PackingHint.TryByHeight;
-            if (packingHint.HasFlag(PackingHint.TryByPathologicalMultiplier))
-                span[index++] = PackingHint.TryByPathologicalMultiplier;
+            if (packingHint.HasFlag(PackingHints.TryByArea))
+                span[index++] = PackingHints.TryByArea;
+            if (packingHint.HasFlag(PackingHints.TryByPerimeter))
+                span[index++] = PackingHints.TryByPerimeter;
+            if (packingHint.HasFlag(PackingHints.TryByBiggerSide))
+                span[index++] = PackingHints.TryByBiggerSide;
+            if (packingHint.HasFlag(PackingHints.TryByWidth))
+                span[index++] = PackingHints.TryByWidth;
+            if (packingHint.HasFlag(PackingHints.TryByHeight))
+                span[index++] = PackingHints.TryByHeight;
+            if (packingHint.HasFlag(PackingHints.TryByPathologicalMultiplier))
+                span[index++] = PackingHints.TryByPathologicalMultiplier;
             span = span.Slice(0, index);
         }
 
@@ -90,17 +90,17 @@ namespace RectpackSharp
         /// <remarks>
         /// The <see cref="PackingRectangle.SortKey"/> values will be modified.
         /// </remarks>
-        public static void SortByPackingHint(PackingRectangle[] rectangles, PackingHint packingHint)
+        public static void SortByPackingHint(PackingRectangle[] rectangles, PackingHints packingHint)
         {
             // We first get the appropiate delegate for getting a rectangle's sort key.
             GetSortKeyDelegate getKeyDelegate = packingHint switch
             {
-                PackingHint.TryByArea => GetArea,
-                PackingHint.TryByPerimeter => GetPerimeter,
-                PackingHint.TryByBiggerSide => GetBiggerSide,
-                PackingHint.TryByWidth => GetWidth,
-                PackingHint.TryByHeight => GetHeight,
-                PackingHint.TryByPathologicalMultiplier => GetPathologicalMultiplier,
+                PackingHints.TryByArea => GetArea,
+                PackingHints.TryByPerimeter => GetPerimeter,
+                PackingHints.TryByBiggerSide => GetBiggerSide,
+                PackingHints.TryByWidth => GetWidth,
+                PackingHints.TryByHeight => GetHeight,
+                PackingHints.TryByPathologicalMultiplier => GetPathologicalMultiplier,
                 _ => throw new ArgumentException(nameof(packingHint))
             };
 
