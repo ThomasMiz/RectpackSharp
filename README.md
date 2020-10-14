@@ -1,4 +1,6 @@
 # RectpackSharp
+[![NuGet](https://img.shields.io/nuget/v/RectpackSharp)](https://nuget.org/packages/RectpackSharp)
+
 A rectangle packing library made in C# for .NET Standard.
 
 Loosely based on the well-known C++ [rectpack-2D library](https://github.com/TeamHypersomnia/rectpack2D)

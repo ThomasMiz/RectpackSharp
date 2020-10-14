@@ -2,6 +2,36 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Authors>ThomasMiz</Authors>
+    <Company>ThomasMiz</Company>
+    <Product />
+    <PackageTags>rectangles;rectpack;pack;packer;textureatlas;spritesheet;texturepacker</PackageTags>
+    <Description>A lightweight library for packing a list of rectangles into a bin as small as possible.</Description>
+    <PackageIcon>packsharp-logo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/ThomasMiz/RectpackSharp</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/ThomasMiz/RectpackSharp</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile></DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="..\packsharp-logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
