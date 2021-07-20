@@ -13,7 +13,9 @@
     <PackageProjectUrl>https://github.com/ThomasMiz/RectpackSharp</PackageProjectUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
+    <PackageReleaseNotes>- Changed lock mechanism for better thread safety when calling Pack(...) from multiple threads at the same time
+- Now targets .NET Standard 2.0 rather than 2.1 for better compatibility (Credit to BenMcLean)</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
