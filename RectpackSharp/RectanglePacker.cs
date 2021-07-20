@@ -52,7 +52,9 @@ namespace RectpackSharp
             // We turn the acceptableDensity parameter into an acceptableArea value, so we can
             // compare the area directly rather than having to calculate the density each time.
             uint totalArea = CalculateTotalArea(rectangles);
-            acceptableDensity = Math.Clamp(acceptableDensity, 0.1f, 1);
+            acceptableDensity = acceptableDensity.CompareTo(0.1f) < 0 ? 0.1f
+                : acceptableDensity.CompareTo(1f) > 0 ? 1f
+                : acceptableDensity;
             uint acceptableArea = (uint)Math.Ceiling(totalArea / acceptableDensity);
 
             // We get a list that will be used (and reused) by the packing algorithm.
