@@ -93,15 +93,29 @@ namespace RectpackSharp
         public static void SortByPackingHint(PackingRectangle[] rectangles, PackingHints packingHint)
         {
             // We first get the appropiate delegate for getting a rectangle's sort key.
-            GetSortKeyDelegate getKeyDelegate = packingHint switch
+            GetSortKeyDelegate getKeyDelegate;
+            switch (packingHint)
             {
-                PackingHints.TryByArea => GetArea,
-                PackingHints.TryByPerimeter => GetPerimeter,
-                PackingHints.TryByBiggerSide => GetBiggerSide,
-                PackingHints.TryByWidth => GetWidth,
-                PackingHints.TryByHeight => GetHeight,
-                PackingHints.TryByPathologicalMultiplier => GetPathologicalMultiplier,
-                _ => throw new ArgumentException(nameof(packingHint))
+                case PackingHints.TryByArea:
+                    getKeyDelegate = GetArea;
+                    break;
+                case PackingHints.TryByPerimeter:
+                    getKeyDelegate = GetPerimeter;
+                    break;
+                case PackingHints.TryByBiggerSide:
+                    getKeyDelegate = GetBiggerSide;
+                    break;
+                case PackingHints.TryByWidth:
+                    getKeyDelegate = GetWidth;
+                    break;
+                case PackingHints.TryByHeight:
+                    getKeyDelegate = GetHeight;
+                    break;
+                case PackingHints.TryByPathologicalMultiplier:
+                    getKeyDelegate = GetPathologicalMultiplier;
+                    break;
+                default:
+                    throw new ArgumentException(nameof(packingHint));
             };
 
             // We use the getKeyDelegate to set the sort keys for all the rectangles.
