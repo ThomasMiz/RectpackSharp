@@ -29,7 +29,7 @@ RectanglePacker.Pack(rectangles, out PackingRectangle bounds);
 Specifying no extra parameters means the library will try all it's tools in order to find the best bin it can. If performance is important, you can trade space efficiency for performance with the optional parameters:
 
 * ``packingHint`` allows you to specify which methods to try when packing. Default is `PackingHints.FindBest`.
-* ``acceptableDensity`` makes the library stop searching once it found a solution with said density or better. Density is calculated as usedArea/binArea. Default is 1.
+* ``acceptableDensity`` makes the library stop searching once it found a solution with said density or better. Density is calculated as usedArea/binArea, so a density of 0 will yield the fastest solution it can, but possibly not an efficient one. Default is 1.
 * ``stepSize`` is by how much to vary the bin size after each try. Higher values might be faster but skip possibly better solutions. Default is 1.
 
 So for example, if you know all your rectangles are squares, you might wanna try
