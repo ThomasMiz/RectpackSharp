@@ -21,6 +21,8 @@ namespace RectpackSharp
         /// <param name="packingHint">Specifies hints for optimizing performance.</param>
         /// <param name="acceptableDensity">Searching stops once a bin is found with this density (usedArea/boundsArea) or better.</param>
         /// <param name="stepSize">The amount by which to increment/decrement size when trying to pack another bin.</param>
+        /// <param name="maxBoundsWidth">The maximum allowed width for the resulting bin, or null for no limit.</param>
+        /// <param name="maxBoundsHeight">The maximum allowed height for the resulting bin, or null for no limit.</param>
         /// <remarks>
         /// The <see cref="PackingRectangle.Id"/> values are never touched. Use this to identify your rectangles.
         /// </remarks>
