@@ -19,19 +19,29 @@ namespace RectpackSharp
         /// <param name="rectangles">The rectangles to pack. The result is saved onto this array.</param>
         /// <param name="bounds">The bounds of the resulting bin. This will always be at X=Y=0.</param>
         /// <param name="packingHint">Specifies hints for optimizing performance.</param>
-        /// <param name="acceptableDensity">Searching stops once a bin is found with this density (usedArea/totalArea) or better.</param>
+        /// <param name="acceptableDensity">Searching stops once a bin is found with this density (usedArea/boundsArea) or better.</param>
         /// <param name="stepSize">The amount by which to increment/decrement size when trying to pack another bin.</param>
         /// <remarks>
         /// The <see cref="PackingRectangle.Id"/> values are never touched. Use this to identify your rectangles.
         /// </remarks>
         public static void Pack(PackingRectangle[] rectangles, out PackingRectangle bounds,
-            PackingHints packingHint = PackingHints.FindBest, float acceptableDensity = 1, uint stepSize = 1)
+            PackingHints packingHint = PackingHints.FindBest, double acceptableDensity = 1, uint stepSize = 1,
+            uint? maxBoundsWidth = null, uint? maxBoundsHeight = null)
         {
             if (rectangles == null)
                 throw new ArgumentNullException(nameof(rectangles));
 
             if (stepSize == 0)
                 throw new ArgumentOutOfRangeException(nameof(stepSize), stepSize, nameof(stepSize) + " must be greater than 0.");
+
+            if (double.IsNaN(acceptableDensity) || double.IsInfinity(acceptableDensity))
+                throw new ArgumentException("Must be a real number", nameof(acceptableDensity));
+
+            if (maxBoundsWidth != null && maxBoundsWidth.Value == 0)
+                throw new ArgumentOutOfRangeException(nameof(maxBoundsWidth), maxBoundsWidth, nameof(maxBoundsWidth) + " must be greater than 0.");
+
+            if (maxBoundsHeight != null && maxBoundsHeight.Value == 0)
+                throw new ArgumentOutOfRangeException(nameof(maxBoundsHeight), maxBoundsHeight, nameof(maxBoundsHeight) + " must be greater than 0.");
 
             bounds = default;
             if (rectangles.Length == 0)
@@ -47,13 +57,16 @@ namespace RectpackSharp
             // We'll try uint.MaxValue as initial bin size. The packing algoritm already tries to
             // use as little space as possible, so this will be QUICKLY cut down closer to the
             // final bin size.
-            uint binSize = uint.MaxValue;
+            uint binWidth = maxBoundsWidth.GetValueOrDefault(uint.MaxValue);
+            uint binHeight = maxBoundsHeight.GetValueOrDefault(uint.MaxValue);
 
             // We turn the acceptableDensity parameter into an acceptableArea value, so we can
             // compare the area directly rather than having to calculate the density each time.
-            uint totalArea = CalculateTotalArea(rectangles);
-            acceptableDensity = Math.Min(Math.Max(acceptableDensity, 0.1f), 1f);
-            uint acceptableArea = (uint)Math.Ceiling(totalArea / acceptableDensity);
+            uint rectanglesAreaSum = CalculateTotalArea(rectangles);
+            double acceptableBoundsAreaTmp = Math.Ceiling(rectanglesAreaSum / acceptableDensity);
+            uint acceptableBoundsArea = (acceptableBoundsAreaTmp <= 0) ? rectanglesAreaSum :
+                double.IsPositiveInfinity(acceptableBoundsAreaTmp) ? uint.MaxValue :
+                (uint)acceptableBoundsAreaTmp;
 
             // We get a list that will be used (and reused) by the packing algorithm.
             List<PackingRectangle> emptySpaces = GetList(rectangles.Length * 2);
@@ -68,7 +81,7 @@ namespace RectpackSharp
             PackingRectangle[] tmpArray = new PackingRectangle[rectangles.Length];
 
             // For each of the specified hints, we try to pack and see if we can find a better solution.
-            for (int i = 0; i < hints.Length && currentBestArea > acceptableArea; i++)
+            for (int i = 0; i < hints.Length && (!hasSolution || currentBestArea > acceptableBoundsArea); i++)
             {
                 // We copy the rectangles onto the tmpBest array, then sort them by what the packing hint says.
                 currentBest.CopyTo(tmpBest, 0);
@@ -78,14 +91,15 @@ namespace RectpackSharp
                 // initial bin size the size of the best bin we got so far. The function never tries
                 // bigger bin sizes, so if with a specified packingHint it can't pack smaller than
                 // with the last solution, it simply stops.
-                if (TryFindBestBin(emptySpaces, ref tmpBest, ref tmpArray, binSize - stepSize, stepSize,
-                    acceptableArea, out PackingRectangle boundsTmp))
+                if (TryFindBestBin(emptySpaces, ref tmpBest, ref tmpArray, binWidth, binHeight, stepSize, acceptableBoundsArea,
+                    out PackingRectangle boundsTmp))
                 {
                     // We have a better solution!
                     // We update the variables tracking the current best solution
                     bounds = boundsTmp;
                     currentBestArea = boundsTmp.Area;
-                    binSize = bounds.BiggerSide;
+                    binWidth = bounds.Width;
+                    binHeight = bounds.Height;
 
                     // We swap tmpBest and currentBest
                     PackingRectangle[] swaptmp = tmpBest;
@@ -113,23 +127,25 @@ namespace RectpackSharp
         /// <param name="emptySpaces">The list of empty spaces for reusing.</param>
         /// <param name="rectangles">The rectangles to pack. Might get swapped with "tmpArray".</param>
         /// <param name="tmpArray">A temporary array the function needs. Might get swapped with "rectangles".</param>
-        /// <param name="binSize">The maximum bin size to try.</param>
+        /// <param name="binWidth">The maximum bin width to try.</param>
+        /// <param name="binHeight">The maximum bin height to try.</param>
         /// <param name="stepSize">The amount by which to increment/decrement size when trying to pack another bin.</param>
         /// <param name="acceptableArea">Stops searching once a bin with this area or less is found.</param>
         /// <param name="bounds">The bounds of the resulting bin (0, 0, width, height).</param>
         /// <returns>Whether a solution was found.</returns>
         private static bool TryFindBestBin(List<PackingRectangle> emptySpaces, ref PackingRectangle[] rectangles,
-            ref PackingRectangle[] tmpArray, uint binSize, uint stepSize, uint acceptableArea, out PackingRectangle bounds)
+            ref PackingRectangle[] tmpArray, uint binWidth, uint binHeight, uint stepSize, uint acceptableArea, out PackingRectangle bounds)
         {
             // We set boundsWidth and boundsHeight to these initial
             // values so they're not good enough for acceptableArea.
-            uint boundsWidth = acceptableArea + 1;
-            uint boundsHeight = 1;
+            uint boundsWidth = 0;
+            uint boundsHeight = 0;
+            bool isFirst = true;
             bounds = default;
 
             // We try packing the rectangles until we either fail, or find a solution with acceptable area.
-            while (boundsWidth * boundsHeight > acceptableArea &&
-                    TryPackAsOrdered(emptySpaces, rectangles, tmpArray, binSize, binSize, out boundsWidth, out boundsHeight))
+            while ((isFirst || boundsWidth * boundsHeight > acceptableArea) &&
+                    TryPackAsOrdered(emptySpaces, rectangles, tmpArray, binWidth, binHeight, out boundsWidth, out boundsHeight))
             {
                 bounds.Width = boundsWidth;
                 bounds.Height = boundsHeight;
@@ -137,12 +153,10 @@ namespace RectpackSharp
                 rectangles = tmpArray;
                 tmpArray = swaptmp;
 
-                // When we're getting close to the final result, we'll reduce the bin size by
-                // stepSize. But if the final bin size ends up requiring multiple steps to get
-                // there, that's very inefficient. So in these cases we just take the bigger
-                // side of the bounds rectangle, which makes everything MUCH faster because the
-                // packing algorithm already tries to make things as square as possible.
-                binSize = Math.Min(binSize - stepSize, Math.Max(boundsWidth, boundsHeight));
+                // As we get close to the final result, we'll reduce the bin size by stepSize.
+                binWidth = boundsWidth <= stepSize ? 1 : (boundsWidth - stepSize);
+                binHeight = boundsHeight <= stepSize ? 1 : (boundsHeight - stepSize);
+                isFirst = false;
             }
 
             // We return true if we've found any solution. Otherwise, false.
