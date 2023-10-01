@@ -49,19 +49,19 @@ Feel free to come ask questions over at the [TrippyGL Discord server](https://di
 ## Gallery
 
 Here's a test case where the rectangles have relatively similar dimentions.
-![](images/rectangles_similar.png)
+![](https://raw.githubusercontent.com/ThomasMiz/RectpackSharp/main/images/rectangles_similar.png)
 
 In this test case, all the squares are the same size. Currently, the library doesn't handle the edges very well on these cases.
-![](images/rectangles_squares.png)
+![](https://raw.githubusercontent.com/ThomasMiz/RectpackSharp/main/images/rectangles_squares.png)
 
 It also works like a charm for texture atlases or sprite sheets!
-![](images/rectangles_spritesheet2.png)
-![](images/rectangles_spritesheet.png)
+![](https://raw.githubusercontent.com/ThomasMiz/RectpackSharp/main/images/rectangles_spritesheet2.png)
+![](https://raw.githubusercontent.com/ThomasMiz/RectpackSharp/main/images/rectangles_spritesheet.png)
 
 The most complicated cases are when the rectangles have very irregular dimentions, because there's no good answer to "what to put where".
 For these next test cases, we simply generated 512 or 2048 random rectangles (each side being from 20 to 200) and packed them.
-![](images/rectangles_random1.png)
-![](images/rectangles_random2.png)
+![](https://raw.githubusercontent.com/ThomasMiz/RectpackSharp/main/images/rectangles_random1.png)
+![](https://raw.githubusercontent.com/ThomasMiz/RectpackSharp/main/images/rectangles_random2.png)
 
 Fuck it, here's 65536 random rectangles in a ~24k x 24k bin.
-![](images/rectangles_random65536.jpeg)
+![](https://raw.githubusercontent.com/ThomasMiz/RectpackSharp/main/images/rectangles_random65536.jpeg)
