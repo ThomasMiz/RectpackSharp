@@ -90,7 +90,11 @@ namespace RectpackSharp
         /// <remarks>
         /// The <see cref="PackingRectangle.SortKey"/> values will be modified.
         /// </remarks>
+#if NET5_0_OR_GREATER
+        public static void SortByPackingHint(Span<PackingRectangle> rectangles, PackingHints packingHint)
+#elif NETSTANDARD2_0
         public static void SortByPackingHint(PackingRectangle[] rectangles, PackingHints packingHint)
+#endif
         {
             // We first get the appropiate delegate for getting a rectangle's sort key.
             GetSortKeyDelegate getKeyDelegate;
@@ -123,7 +127,11 @@ namespace RectpackSharp
                 rectangles[i].SortKey = getKeyDelegate(rectangles[i]);
 
             // We sort the array, using the default rectangle comparison (which compares sort keys).
+#if NET5_0_OR_GREATER
+            rectangles.Sort();
+#elif NETSTANDARD2_0
             Array.Sort(rectangles);
+#endif
         }
     }
 }
