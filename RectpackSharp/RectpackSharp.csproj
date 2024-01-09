@@ -11,15 +11,14 @@
     <PackageIcon>packsharp-logo.png</PackageIcon>
     <RepositoryUrl>https://github.com/ThomasMiz/RectpackSharp</RepositoryUrl>
     <PackageProjectUrl>https://github.com/ThomasMiz/RectpackSharp</PackageProjectUrl>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Version>1.1</Version>
-    <PackageReleaseNotes>- Added maxBoundsWidth and maxBoundsHeight optional parameters
-- Minor fixes to acceptableDensity mechanism</PackageReleaseNotes>
+    <Version>1.2.0</Version>
+    <PackageReleaseNotes>- Added Span support on .NET 5.0 and greater</PackageReleaseNotes>
     <Title>RectpackSharp</Title>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
