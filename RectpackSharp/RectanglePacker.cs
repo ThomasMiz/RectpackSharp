@@ -147,6 +147,29 @@ namespace RectpackSharp
             ReturnList(emptySpaces);
         }
 
+#if NET5_0_OR_GREATER
+        /// <summary>
+        /// Finds a way to pack all the given rectangles into a single bin. Performance can be traded for
+        /// space efficiency by using the optional parameters.
+        /// </summary>
+        /// <param name="rectangles">The rectangles to pack. The result is saved onto this array.</param>
+        /// <param name="bounds">The bounds of the resulting bin. This will always be at X=Y=0.</param>
+        /// <param name="packingHint">Specifies hints for optimizing performance.</param>
+        /// <param name="acceptableDensity">Searching stops once a bin is found with this density (usedArea/boundsArea) or better.</param>
+        /// <param name="stepSize">The amount by which to increment/decrement size when trying to pack another bin.</param>
+        /// <param name="maxBoundsWidth">The maximum allowed width for the resulting bin, or null for no limit.</param>
+        /// <param name="maxBoundsHeight">The maximum allowed height for the resulting bin, or null for no limit.</param>
+        /// <remarks>
+        /// The <see cref="PackingRectangle.Id"/> values are never touched. Use this to identify your rectangles.
+        /// </remarks>
+        public static void Pack(PackingRectangle[] rectangles, out PackingRectangle bounds,
+            PackingHints packingHint = PackingHints.FindBest, double acceptableDensity = 1, uint stepSize = 1,
+            uint? maxBoundsWidth = null, uint? maxBoundsHeight = null)
+        {
+            Pack(rectangles.AsSpan(), out bounds, packingHint, acceptableDensity, stepSize, maxBoundsWidth, maxBoundsHeight);
+        }
+#endif
+
         /// <summary>
         /// Tries to find a solution with the smallest bin size possible, packing
         /// the rectangles in the order in which the were provided.
